@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Álbum de Luxo | Memórias Eternas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700;900&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        * {
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --page-width: clamp(300px, 42vw, 560px);
+            --page-height: clamp(430px, 64vh, 760px);
+            --book-transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        @media (max-width: 767px) {
+            :root {
+                --page-width: min(92vw, 460px);
+                --page-height: min(78vh, 640px);
+            }
+            .book-viewport {
+                width: var(--page-width) !important;
+            }
+            .book-page {
+                width: 100% !important;
+            }
+            .page-stack-l, .page-stack-r {
+                display: none !important;
+            }
+            .page-side {
+                padding: 1.5rem !important;
+            }
+            .gold-corner::before, .gold-corner::after {
+                width: 28px !important;
+                height: 28px !important;
+                border-width: 3px !important;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .book-viewport {
+                width: calc(var(--page-width) * 2) !important;
+            }
+            .book-page {
+                width: 50% !important;
+            }
+        }
+
+        body {
+            font-family: 'Playfair Display', serif;
+            background: radial-gradient(circle at 30% 20%, #2a0f1c 0%, #0e0109 70%, #000000 100%);
+            perspective: 2200px;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+        }
+
+        .serif-title { font-family: 'Cinzel', serif; }
+        .ornate-title { font-family: 'Cinzel Decorative', serif; }
+
+        .book-stage {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: visible;
+        }
+
+        .book-viewport {
+            height: var(--page-height);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: var(--book-transition);
+            filter: drop-shadow(0px 30px 60px rgba(0, 0, 0, 0.8));
+            will-change: transform;
+        }
+
+        .book-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+        }
+
+        .book-page {
+            position: absolute;
+            height: 100%;
+            top: 0;
+            right: 0;
+            transform-origin: left center;
+            transform-style: preserve-3d;
+            transition: var(--book-transition);
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .page-side {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2rem;
+            box-sizing: border-box;
+            background: #faf5eb;
+            border-radius: 2px 8px 8px 2px;
+        }
+
+        .page-back {
+            transform: rotateY(180deg);
+            box-shadow: inset -35px 0 45px rgba(0,0,0,0.12);
+            background: linear-gradient(145deg, #fef8ed 0%, #f5ede0 100%);
+        }
+
+        .page-front {
+            box-shadow: inset 35px 0 45px rgba(0,0,0,0.08);
+            background: linear-gradient(145deg, #fffaf2 0%, #f8efdf 100%);
+        }
+
+        .cover-skin {
+            background: linear-gradient(135deg, #5a1a38 0%, #2c0317 100%);
+            color: #fce7f3;
+            border-radius: 6px 18px 18px 6px;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.6), 5px 0 15px rgba(0,0,0,0.3);
+        }
+
+        .gold-corner {
+            position: relative;
+        }
+        .gold-corner::before, .gold-corner::after {
+            content: '';
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e4bc6e;
+            pointer-events: none;
+            z-index: 25;
+            filter: drop-shadow(0 1px 3px rgba(0,0,0,0.5));
+            border-radius: 4px;
+        }
+        .gold-corner-top::before { top: 14px; left: 14px; border-right: none; border-bottom: none; }
+        .gold-corner-top::after { top: 14px; right: 14px; border-left: none; border-bottom: none; }
+        .gold-corner-bottom::before { bottom: 14px; left: 14px; border-right: none; border-top: none; }
+        .gold-corner-bottom::after { bottom: 14px; right: 14px; border-left: none; border-top: none; }
+
+        .gold-embossed {
+            color: #f7e8b6;
+            text-shadow: 0px 1px 0px #c2a040, 0px 2px 0px #9e7b1c, 0px 4px 12px rgba(0,0,0,0.8);
+        }
+
+        .book-page.flipped {
+            transform: rotateY(-180deg);
+        }
+
+        .spine-shadow {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 32px;
+            transform: translateX(-50%);
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 70%);
+            z-index: 55;
+            pointer-events: none;
+        }
+
+        .photo-canvas {
+            width: 100%;
+            flex: 1;
+            min-height: 60%;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #e9dfce;
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.25);
+            margin: 0.75rem 0;
+            position: relative;
+            border: 1px solid rgba(218, 178, 98, 0.4);
+        }
+
+        .photo-canvas img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+
+        .page-stack-l, .page-stack-r {
+            position: absolute;
+            top: 8px;
+            bottom: 8px;
+            width: 28px;
+            background: repeating-linear-gradient(to bottom, #dbb46a 0px, #dbb46a 1.5px, #f9efdf 2px, #f9efdf 4px);
+            box-shadow: inset -1px 0 8px rgba(0,0,0,0.2), 4px 8px 20px rgba(0,0,0,0.4);
+            z-index: 5;
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            opacity: 1;
+            border-radius: 8px 0 0 8px;
+        }
+        .page-stack-r {
+            border-radius: 0 8px 8px 0;
+        }
+
+        .click-zone-left, .click-zone-right {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 48%;
+            z-index: 200;
+            background: transparent;
+            cursor: pointer;
+        }
+        .click-zone-left { left: 0; }
+        .click-zone-right { right: 0; }
+
+        .click-zone-left.hidden-click, .click-zone-right.hidden-click {
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        @media (min-width: 768px) {
+            .book-page:not(.flipped):hover {
+                transform: rotateY(-3deg) translateZ(6px);
+                transition: transform 0.2s;
+            }
+            .book-page.flipped:hover {
+                transform: rotateY(-177deg) translateZ(6px);
+            }
+        }
+
+        html, body {
+            overflow-x: hidden;
+            position: fixed;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="book-stage">
+    <div id="zone-left" class="click-zone-left" onclick="window.prevPage && prevPage()"></div>
+    <div id="zone-right" class="click-zone-right" onclick="window.nextPage && nextPage()"></div>
+
+    <div class="book-viewport" id="book-vp">
+        <div class="book-container" id="my-book">
+            <div class="spine-shadow md:block hidden"></div>
+            <div class="page-stack-l" id="stack-l"></div>
+            <div class="page-stack-r" id="stack-r"></div>
+
+            <!-- CAPA + PÁGINA 1 (verso) -->
+            <div class="book-page" id="page-0">
+                <div class="page-side cover-skin gold-corner gold-corner-top gold-corner-bottom">
+                    <div class="absolute inset-0 z-0">
+                        <img class="w-full h-full object-cover opacity-20" src="foto5.jpg" alt="Capa">
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#1b010c] via-[#330319]/85 to-transparent"></div>
+                    </div>
+                    <div class="relative z-10 flex flex-col justify-between h-full py-8 px-4">
+                        <div class="text-center">
+                            <span class="text-[10px] sm:text-xs tracking-[0.5em] text-amber-300 font-bold block mb-2 serif-title">Álbum Pessoal</span>
+                            <div class="w-16 h-[1.5px] bg-[#dfb743]/60 mx-auto"></div>
+                        </div>
+                        <div class="text-center my-auto">
+                            <h1 class="ornate-title text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-widest gold-embossed leading-relaxed mb-4">Minha Baixinha</h1>
+                            <div class="w-24 sm:w-32 h-[2px] bg-gradient-to-r from-transparent via-[#e4bc6e] to-transparent mx-auto my-6"></div>
+                            <p class="serif-title text-xs sm:text-sm tracking-[0.35em] text-pink-200/90 uppercase">Coleção de Histórias</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-2xl text-[#f7e8b6]/80 mb-2"><i class="fa-solid fa-feather-pointed"></i></div>
+                            <span class="text-[9px] sm:text-[10px] uppercase tracking-[0.3em] text-amber-300 font-semibold">Rosa Imperial & Ouro</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-side page-back text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] text-pink-900 font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>I</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto5.jpg" alt="Foto 1"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide text-pink-950">A luz que emana de nós é a bússola que me guia, mesmo quando o mundo decide anoitecer.</h4></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOLHA 2: PÁGINA 2/3 -->
+            <div class="book-page" id="page-1">
+                <div class="page-side page-front text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] text-pink-900 font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>II</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto1.jpg" alt="Foto 2"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">Crescemos em silêncio e força, entrelaçados pelo tempo, como os galhos de uma árvore centenária.</h4></div>
+                    </div>
+                </div>
+                <div class="page-side page-back text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>III</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto2.jpg" alt="Foto 3"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">O final deste capítulo é apenas o prefácio de toda uma vida que ainda temos de escrever.</h4></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOLHA 3: PÁGINA 4/5 -->
+            <div class="book-page" id="page-2">
+                <div class="page-side page-front text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>IV</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto3.jpg" alt="Foto 4"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">Nossa história é um rascunho infinito, escrita com a tinta dourada dos nossos sonhos</h4></div>
+                    </div>
+                </div>
+                <div class="page-side page-back text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>V</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto4.jpg" alt="Foto 5"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">Como um verso imortal, nossa história encontra rima perfeita em cada detalhe que criamos</h4></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOLHA 4: PÁGINA 6/7 -->
+            <div class="book-page" id="page-3">
+                <div class="page-side page-front text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>VI</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto5.jpg" alt="Foto 6"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">Sua presença é a luz que ilumina os dias cinzentos e dá vida aos meus sonhos</h4></div>
+                    </div>
+                </div>
+                <div class="page-side page-back text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>VII</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto6.jpg" alt="Foto 7"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">Cada instante ao teu lado é um verso que escrevo no diário da minha alma.</h4></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOLHA 5: PÁGINA 8/9 -->
+            <div class="book-page" id="page-4">
+                <div class="page-side page-front text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>VIII</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto7.jpg" alt="Foto 8"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">Guardarei este momento como um tesouro raro, lapidado pelo afeto que nos une</h4></div>
+                    </div>
+                </div>
+                <div class="page-side page-back text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>IX</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto8.jpg" alt="Foto 9"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">O tempo parece silenciar quando nossos caminhos se encontram em perfeita sintonia</h4></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOLHA 6: PÁGINA 10/11 -->
+            <div class="book-page" id="page-5">
+                <div class="page-side page-front text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>X</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto9.jpg" alt="Foto 10"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">Tua essência é de uma claridade imensa, capturando o olhar como a luz em um cristal.</h4></div>
+                    </div>
+                </div>
+                <div class="page-side page-back text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>XI</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto10.jpg" alt="Foto 11"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">Teus gestos carregam a suavidade de uma melodia clássica, tornando tua presença não apenas notável, mas uma inspiração constante para o olhar</h4></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOLHA 7: PÁGINA 12/13 -->
+            <div class="book-page" id="page-6">
+                <div class="page-side page-front text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>XII</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto11.jpg" alt="Foto 12"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">Existe uma elegância inquestionável na tua forma de ser, que transforma qualquer ambiente em uma galeria de arte viva e fascinante</h4></div>
+                    </div>
+                </div>
+                <div class="page-side page-back text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>XIII</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto12.jpg" alt="Foto 13"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">Tua beleza possui uma harmonia rara, como se cada detalhe tivesse sido esculpido pelo tempo com a máxima precisão e cuidado</h4></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOLHA 8: PÁGINA 14/15 -->
+            <div class="book-page" id="page-7">
+                <div class="page-side page-front text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>XIV</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto13.jpg" alt="Foto 14"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">A beleza que carregas é um detalhe preciso, como se cada traço fosse desenhado com perfeição</h4></div>
+                    </div>
+                </div>
+                <div class="page-side page-back text-neutral-800">
+                    <div class="flex flex-col justify-between h-full">
+                        <div class="flex justify-between items-center text-[9px] font-bold tracking-[0.25em] border-b border-pink-200 pb-2">
+                            <span class="serif-title">Bytezinha 🌸</span><span>XV</span>
+                        </div>
+                        <div class="photo-canvas"><img src="foto14.jpg" alt="Foto 15"></div>
+                        <div class="pt-2 text-center"><h4 class="serif-title font-bold text-xs tracking-wide">Sua essência é de uma clareza imensa, capturando o olhar como a luz em um cristal.</h4></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTRACAPA -->
+            <div class="book-page" id="page-8">
+                <div class="page-side cover-skin gold-corner gold-corner-top gold-corner-bottom text-center">
+                    <div class="border-4 border-double border-amber-400/30 p-8 rounded-2xl bg-black/20 w-full max-w-[85%] my-auto mx-auto">
+                        <div class="text-3xl text-[#f7e8b6] mb-4"><i class="fa-solid fa-crown"></i></div>
+                        <h3 class="ornate-title text-5xl font-extrabold tracking-widest gold-embossed">FIM</h3>
+                        <div class="w-20 h-px bg-[#dfb743]/60 mx-auto my-5"></div>
+                        <p class="serif-title text-[11px] text-pink-200/90 uppercase tracking-widest">Memórias Perpetuadas no Tempo</p>
+                    </div>
+                </div>
+                <div class="page-side page-back cover-skin"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<audio id="sound-flip" preload="auto">
+    <source src="https://assets.mixkit.co/active_storage/sfx/1479/1479-84.wav" type="audio/wav">
+</audio>
+
+<script>
+    (function() {
+        const TOTAL_SHEETS = 9;
+        let currentSheet = 0;
+        let animationLock = false;
+
+        const flipSound = document.getElementById('sound-flip');
+        function playFlip() {
+            if (!flipSound) return;
+            flipSound.currentTime = 0;
+            flipSound.play().catch(e => console.log("Áudio não reproduzido"));
+        }
+
+        function getSheetElement(idx) {
+            return document.getElementById(`page-${idx}`);
+        }
+
+        function updateSheetsVisual(targetSheet) {
+            for (let i = 0; i < TOTAL_SHEETS; i++) {
+                const sheet = getSheetElement(i);
+                if (!sheet) continue;
+                if (i < targetSheet) {
+                    sheet.classList.add('flipped');
+                } else {
+                    sheet.classList.remove('flipped');
+                }
+                if (i < targetSheet) {
+                    sheet.style.zIndex = i + 5;
+                } else {
+                    sheet.style.zIndex = TOTAL_SHEETS - i + 5;
+                }
+            }
+        }
+
+        function goToSheet(sheetIndex) {
+            if (animationLock) return false;
+            if (sheetIndex < 0 || sheetIndex > TOTAL_SHEETS) return false;
+            if (sheetIndex === currentSheet) return false;
+            
+            animationLock = true;
+            playFlip();
+            
+            currentSheet = sheetIndex;
+            updateSheetsVisual(currentSheet);
+            updateBookPosition();
+            
+            setTimeout(() => { animationLock = false; }, 600);
+            return true;
+        }
+
+        window.nextPage = function() {
+            if (currentSheet < TOTAL_SHEETS) goToSheet(currentSheet + 1);
+        };
+        
+        window.prevPage = function() {
+            if (currentSheet > 0) goToSheet(currentSheet - 1);
+        };
+
+        function updateBookPosition() {
+            const bookVP = document.getElementById('book-vp');
+            const stackL = document.getElementById('stack-l');
+            const stackR = document.getElementById('stack-r');
+            const zoneLeft = document.getElementById('zone-left');
+            const zoneRight = document.getElementById('zone-right');
+            const isMobile = window.innerWidth < 768;
+            
+            if (isMobile) {
+                bookVP.style.transform = "translateX(0) rotateX(0deg) rotateY(0deg)";
+                if (currentSheet === 0) {
+                    zoneLeft.classList.add('hidden-click');
+                    zoneRight.classList.remove('hidden-click');
+                } else if (currentSheet === TOTAL_SHEETS) {
+                    zoneLeft.classList.remove('hidden-click');
+                    zoneRight.classList.add('hidden-click');
+                } else {
+                    zoneLeft.classList.remove('hidden-click');
+                    zoneRight.classList.remove('hidden-click');
+                }
+                return;
+            }
+            
+            if (currentSheet === 0) {
+                bookVP.style.transform = "translateX(-23%) rotateX(8deg) rotateY(-4deg)";
+                zoneLeft.classList.add('hidden-click');
+                zoneRight.classList.remove('hidden-click');
+                stackL.style.opacity = '0';
+                stackR.style.opacity = '0.8';
+                stackL.style.width = '0px';
+                stackR.style.width = '26px';
+                stackR.style.right = '-26px';
+            } 
+            else if (currentSheet === TOTAL_SHEETS) {
+                bookVP.style.transform = "translateX(23%) rotateX(8deg) rotateY(4deg)";
+                zoneLeft.classList.remove('hidden-click');
+                zoneRight.classList.add('hidden-click');
+                stackL.style.opacity = '0.8';
+                stackR.style.opacity = '0';
+                stackL.style.width = '26px';
+                stackL.style.left = '-26px';
+                stackR.style.width = '0px';
+            }
+            else {
+                bookVP.style.transform = "translateX(0%) rotateX(5deg) rotateY(0deg)";
+                zoneLeft.classList.remove('hidden-click');
+                zoneRight.classList.remove('hidden-click');
+                const leftThick = Math.min(28, currentSheet * 3);
+                const rightThick = Math.min(28, (TOTAL_SHEETS - currentSheet) * 3);
+                stackL.style.width = `${leftThick}px`;
+                stackL.style.left = `-${leftThick}px`;
+                stackL.style.opacity = leftThick > 2 ? '0.85' : '0.4';
+                stackR.style.width = `${rightThick}px`;
+                stackR.style.right = `-${rightThick}px`;
+                stackR.style.opacity = rightThick > 2 ? '0.85' : '0.4';
+            }
+        }
+
+        // Swipe
+        let touchStart = 0;
+        const stage = document.querySelector('.book-stage');
+        stage.addEventListener('touchstart', (e) => {
+            touchStart = e.changedTouches[0].screenX;
+        }, { passive: true });
+        stage.addEventListener('touchend', (e) => {
+            const touchEnd = e.changedTouches[0].screenX;
+            const diff = touchStart - touchEnd;
+            if (Math.abs(diff) > 45) {
+                if (diff > 0) window.nextPage();
+                else window.prevPage();
+                e.preventDefault();
+            }
+        });
+        
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') { window.nextPage(); e.preventDefault(); }
+            if (e.key === 'ArrowLeft') { window.prevPage(); e.preventDefault(); }
+        });
+        
+        window.addEventListener('resize', () => { updateBookPosition(); });
+        
+        function init() {
+            currentSheet = 0;
+            updateSheetsVisual(0);
+            updateBookPosition();
+        }
+        
+        init();
+        if(flipSound) flipSound.volume = 0.5;
+    })();
+</script>
+</body>
+</html>
